@@ -5,7 +5,8 @@ const db = mysql.createConnection({
     host: 'localhost',
     user: 'admin',
     password: '12345678',
-    database: 'jobsprout'
+    database: 'jobsprout',
+    port: 3306
 });
 
 // Handle connection errors

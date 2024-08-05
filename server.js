@@ -7,7 +7,7 @@ const db = require('./config/db');
 require('./config/passport');
 
 const app = express();
-const PORT = 8080;
+const PORT = process.env.PORT || 3000;
 
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
