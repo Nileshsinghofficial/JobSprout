@@ -2,10 +2,10 @@ const mysql = require('mysql2');
 const bcrypt = require('bcrypt');
 
 const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'admin',
-    password: '12345678',
-    database: 'jobsprout',
+    host: 'mysql.railway.internal',
+    user: 'root',
+    password: 'zkptREJuEIyoSFoadnFjJOuBZbBoepVu',
+    database: 'railway',
     port: 3306
 });
 
