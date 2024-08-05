@@ -5,11 +5,11 @@ const mysql = require('mysql2');
 
 // Create a connection to the MySQL database
 const db = mysql.createConnection({
-    host: process.env.MYSQLHOST,        // Use local host
-    user: process.env.MYSQLUSER,    // Database username
-    password: process.env.MYSQLPASSWORD, // Database password
-    database: process.env.MYSQLDATABASE,   // Database name
-    port: process.env.MYSQLPORT          
+    host: process.env.DB_HOST,
+    user: process.env.DB_USERNAME,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    port: process.env.DB_PORT
 });
 
 // Handle connection errors
