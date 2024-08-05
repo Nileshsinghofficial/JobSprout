@@ -15,7 +15,6 @@ router.post('/admin-register', async (req, res) => {
     const { username, password } = req.body;
 
     try {
-        // Check if username already exists
         const checkAdminSql = 'SELECT * FROM admins WHERE username = ?';
         db.query(checkAdminSql, [username], async (err, results) => {
             if (err) {
@@ -28,7 +27,7 @@ router.post('/admin-register', async (req, res) => {
                 return res.redirect('/admin/admin-register');
             }
 
-            // If username is available, hash the password and insert the new admin
+            // If username is available, hash the password
             const hashedPassword = await bcrypt.hash(password, 10);
             const sql = 'INSERT INTO admins (username, password) VALUES (?, ?)';
             db.query(sql, [username, hashedPassword], (err, result) => {
