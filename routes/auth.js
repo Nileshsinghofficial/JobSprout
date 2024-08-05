@@ -23,6 +23,7 @@ router.post('/register', async (req, res) => {
         const checkUserSql = 'SELECT * FROM users WHERE username = ?';
         db.query(checkUserSql, [username], async (err, results) => {
             if (err) {
+                console.error('Error checking username availability:', err);
                 req.flash('error_msg', 'Error checking username availability');
                 return res.redirect('/register');
             }
@@ -37,6 +38,7 @@ router.post('/register', async (req, res) => {
             const sql = 'INSERT INTO users (username, password, checkbox) VALUES (?, ?, ?)';
             db.query(sql, [username, hashedPassword, checkbox ? 1 : 0], (err, result) => {
                 if (err) {
+                    console.error('Error registering user:', err);
                     req.flash('error_msg', 'Error registering user');
                     return res.redirect('/register');
                 }
@@ -45,7 +47,7 @@ router.post('/register', async (req, res) => {
             });
         });
     } catch (err) {
-        console.error(err);
+        console.error('An error occurred during registration:', err);
         req.flash('error_msg', 'An error occurred during registration');
         res.redirect('/register');
     }
@@ -64,6 +66,7 @@ router.post('/login', (req, res) => {
     const sql = 'SELECT * FROM users WHERE username = ?';
     db.query(sql, [username], async (err, results) => {
         if (err) {
+            console.error('An error occurred while querying the database:', err);
             req.flash('error_msg', 'An error occurred while querying the database');
             return res.redirect('/login');
         }
@@ -78,7 +81,6 @@ router.post('/login', (req, res) => {
             return res.redirect('/login');
         }
         req.session.user = user;
-        // res.redirect('/profile');
         const returnTo = req.session.returnTo || '/';
         delete req.session.returnTo; // Clear the returnTo session variable
         res.redirect(returnTo);
@@ -90,6 +92,7 @@ router.get('/profile', ensureAuthenticated, (req, res) => {
     const jobsSql = 'SELECT * FROM jobs';
     db.query(jobsSql, (err, jobs) => {
         if (err) {
+            console.error('Error fetching jobs:', err);
             req.flash('error_msg', 'Error fetching jobs');
             return res.redirect('/'); // Redirect to home or another route
         }
@@ -101,6 +104,7 @@ router.get('/profile', ensureAuthenticated, (req, res) => {
 router.post('/logout', (req, res) => {
     req.session.destroy(err => {
         if (err) {
+            console.error('Error logging out:', err);
             req.flash('error_msg', 'Error logging out');
             return res.redirect('/login'); // Redirect to profile or another route
         }
