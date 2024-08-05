@@ -24,7 +24,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Session setup
 app.use(session({
-    secret: process.env.SESSION_SECRET, // Use environment variable for session secret
+    secret: process.env.SESSION_SECRET, 
     resave: false,
     saveUninitialized: true,
     cookie: { secure: process.env.NODE_ENV === 'production' } // Set to true if using HTTPS
