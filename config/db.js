@@ -1,4 +1,5 @@
 require('dotenv').config(); // Ensure environment variables are loaded
+const bcrypt = require('bcryptjs');
 
 const mysql = require('mysql2');
 
