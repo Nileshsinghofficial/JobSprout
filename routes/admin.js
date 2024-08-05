@@ -117,7 +117,7 @@ router.get('/edit-job/:id', (req, res) => {
     });
 });
 
-router.post('/edit-job/:id', ensureAuthenticated, (req, res) => {
+router.post('/edit-job/:id', (req, res) => {
     const jobId = req.params.id;
     const { title, description, author } = req.body;
     const sql = 'UPDATE jobs SET title = ?, description = ?, author = ? WHERE id = ?';

@@ -1,12 +1,14 @@
-const mysql = require('mysql2');
-const bcrypt = require('bcrypt');
+require('dotenv').config(); // Ensure environment variables are loaded
 
+const mysql = require('mysql2');
+
+// Create a connection to the MySQL database
 const db = mysql.createConnection({
-    host: 'mysql.railway.internal',
-    user: 'root',
-    password: 'zkptREJuEIyoSFoadnFjJOuBZbBoepVu',
-    database: 'railway',
-    port: 3306
+    host: process.env.DB_HOST,        // Use local host
+    user: process.env.DB_USERNAME,    // Database username
+    password: process.env.DB_PASSWORD, // Database password
+    database: process.env.DATABASE,   // Database name
+    port: process.env.DB_PORT          // Database port
 });
 
 // Handle connection errors
@@ -14,6 +16,7 @@ db.on('error', (err) => {
     console.error('Database error:', err);
 });
 
+// Connect to the database
 db.connect((err) => {
     if (err) {
         console.error('Database connection error:', err);
@@ -21,29 +24,5 @@ db.connect((err) => {
     }
     console.log('Connected to the MySQL server.');
 });
-
-
-
-// const username = 'admin'; // Replace with the desired admin username
-// const password = 'admin'; // Replace with the desired admin password
-
-// bcrypt.hash(password, 10, (err, hashedPassword) => {
-//     if (err) {
-//         console.error('Error hashing password:', err);
-//         db.end();
-//         return;
-//     }
-
-//     const sql = 'INSERT INTO admins (username, password) VALUES (?, ?)';
-//     db.query(sql, [username, hashedPassword], (err, result) => {
-//         if (err) {
-//             console.error('Error inserting admin:', err);
-//         } else {
-//             console.log('Admin inserted with hashed password.');
-//         }
-//         db.end();
-//     });
-// });
-
 
 module.exports = db;

@@ -1,35 +1,45 @@
 const express = require('express');
 const path = require('path');
 const session = require('express-session');
+const MySQLStore = require('express-mysql-session')(session);
 const flash = require('connect-flash');
 const passport = require('passport'); 
 const db = require('./config/db');
 require('./config/passport');
+require('dotenv').config();
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Import routes
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const jobRoutes = require('./routes/jobs');
 const userRoutes = require('./routes/user');
 
+// Middleware setup
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Session setup
 app.use(session({
-    secret: 'secret', // Consider using an environment variable for security
+    secret: process.env.SESSION_SECRET, // Use environment variable for session secret
     resave: false,
     saveUninitialized: true,
+    cookie: { secure: process.env.NODE_ENV === 'production' } // Set to true if using HTTPS
 }));
+
 app.use(passport.initialize());
 app.use(passport.session());
 
 app.use(flash());
 
+// Set view engine and views directory
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// Global middleware for flash messages and user/admin info
 app.use((req, res, next) => {
     res.locals.success_msg = req.flash('success_msg');
     res.locals.error_msg = req.flash('error_msg');
@@ -38,20 +48,15 @@ app.use((req, res, next) => {
     next();
 });
 
+// Routes
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'home.html'));
 });
 
-// Registering routes
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
-app.use('/', jobRoutes); // Using job routes for root endpoints like '/apply-job/:id'
+app.use('/', jobRoutes);
 app.use('/user', userRoutes);
-
-// Removing redundant routes for home rendering
-// app.get('/home', (req, res) => {
-//     res.render('home');
-// });
 
 app.get('/admin-login', (req, res) => {
     res.render('admin-login');
@@ -65,7 +70,6 @@ app.get('/login', (req, res) => {
     res.render('login');
 });
 
-// Removed duplicate /profile route, keeping only one version
 app.get('/profile', (req, res) => {
     if (!req.session.user) {
         return res.redirect('/login');
@@ -82,7 +86,6 @@ app.get('/profile', (req, res) => {
     });
 });
 
-// Fetching jobs and rendering jobs page
 app.get('/jobs', (req, res) => {
     const sql = 'SELECT * FROM jobs';
     db.query(sql, (err, results) => {
@@ -94,7 +97,6 @@ app.get('/jobs', (req, res) => {
     });
 });
 
-// Endpoint to check if the user is logged in
 app.get('/api/check-login', (req, res) => {
     if (req.session.user) {
         res.json({ loggedIn: true, username: req.session.user.username });
@@ -103,11 +105,6 @@ app.get('/api/check-login', (req, res) => {
     }
 });
 
-app.get('/admin-login', (req, res) => {
-    res.render('admin-login');
-});
-
-// Admin dashboard route
 app.get('/admin-dashboard', (req, res) => {
     if (!req.session.admin) {
         return res.redirect('/admin-login');
@@ -116,9 +113,9 @@ app.get('/admin-dashboard', (req, res) => {
 });
 
 // Optional: Catch-all route for 404 errors
-// app.use((req, res, next) => {
-//     res.status(404).send('404 Not Found');
-// });
+app.use((req, res, next) => {
+    res.status(404).send('404 Not Found');
+});
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
