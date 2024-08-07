@@ -17,7 +17,7 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
-            fetch('/api/check-login')  
+            fetch('/api/check-login')
                 .then(response => response.json())
                 .then(data => {
                     if (!data.loggedIn) {
