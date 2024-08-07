@@ -1,22 +1,10 @@
 const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
-const session = require('express-session');
-const MySQLStore = require('express-mysql-session')(session);
 require('dotenv').config();
 const { ensureAuthenticated } = require('./middleware/auth');
 const flashMiddleware = require('./middleware/flashMiddleware');
-const sequelize = require('./config/db');
 const { QueryTypes } = require('sequelize');
-
-// Set up the session store with MySQL
-const sessionStore = new MySQLStore({
-    host: process.env.MYSQLHOST,
-    port: process.env.MYSQLPORT,
-    user: process.env.MYSQLUSER,
-    password: process.env.MYSQLPASSWORD,
-    database: process.env.MYSQLDATABASE
-});
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -24,23 +12,18 @@ const PORT = process.env.PORT || 8080;
 // Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(cookieParser());
-app.use(session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: true,
-    store: sessionStore
-}));
 app.use(express.static(path.join(__dirname, 'public')));
-
-// Use custom flash middleware
 app.use(flashMiddleware);
+
+// View engine setup
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
 // Global middleware for flash messages and user info
 app.use((req, res, next) => {
     res.locals.success_msg = res.locals.flash.success_msg;
     res.locals.error_msg = res.locals.flash.error_msg;
-    res.locals.user = req.session.user || null;
+    res.locals.user = req.user || null;
     next();
 });
 
@@ -75,7 +58,7 @@ app.get('/profile', ensureAuthenticated, (req, res) => {
     const jobsSql = 'SELECT * FROM jobs';
     sequelize.query(jobsSql, { type: QueryTypes.SELECT })
         .then(jobs => {
-            res.render('profile', { user: req.session.user, jobs });
+            res.render('profile', { user: req.user, jobs });
         })
         .catch(err => {
             req.flash('error_msg', 'Error fetching jobs');
@@ -96,7 +79,7 @@ app.get('/jobs', ensureAuthenticated, (req, res) => {
 });
 
 app.get('/admin-dashboard', ensureAuthenticated, (req, res) => {
-    if (!req.session.user || !req.session.user.isAdmin) {
+    if (!req.user.isAdmin) {
         return res.redirect('/admin-login');
     }
     res.render('admin-dashboard');
