@@ -7,6 +7,7 @@ const db = require('./config/db');
 require('./config/passport');
 require('dotenv').config();
 const SequelizeStore = require('connect-session-sequelize')(session.Store);
+const { ensureAuthenticated } = require('./middleware/auth');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -58,7 +59,7 @@ const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const jobRoutes = require('./routes/jobs');
 const userRoutes = require('./routes/user');
-const { ensureAuthenticated } = require('./middleware/auth');
+
 
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);

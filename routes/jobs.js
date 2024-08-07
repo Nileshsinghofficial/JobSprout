@@ -4,28 +4,26 @@ const db = require('../config/db');
 const { ensureAuthenticated } = require('../middleware/auth');
 
 // Apply for job
-router.post('/apply-job/:id', (req, res) => {
-    if (!req.session.user) {
-        req.flash('error_msg', 'Please login to apply for jobs.');
-        return res.redirect('/login');
-    }
+router.post('/apply-job/:id', ensureAuthenticated, (req, res) => {
     const jobId = req.params.id;
     const userId = req.session.user.id;
 
     const sql = 'INSERT INTO applications (job_id, user_id) VALUES (?, ?)';
     db.query(sql, [jobId, userId], (err, result) => {
         if (err) {
-            req.flash('error_msg', 'Already applying this job');
+            req.flash('error_msg', 'Already applied for this job');
             return res.redirect('/profile');
         }
         req.flash('success_msg', 'Successfully applied for job');
         res.redirect('/profile');
     });
 });
+
+// View applied jobs
 router.get('/applied-jobs', ensureAuthenticated, (req, res) => {
     const userId = req.session.user.id;
     const sql = `
-        SELECT jobs.title, jobs.description , jobs.author
+        SELECT jobs.title, jobs.description, jobs.author
         FROM applications 
         JOIN jobs ON applications.job_id = jobs.id 
         WHERE applications.user_id = ?
@@ -38,7 +36,5 @@ router.get('/applied-jobs', ensureAuthenticated, (req, res) => {
         res.render('applied-jobs', { jobs: results });
     });
 });
-
- 
 
 module.exports = router;
