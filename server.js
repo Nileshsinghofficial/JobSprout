@@ -1,10 +1,12 @@
 const express = require('express');
 const path = require('path');
+const session = require('express-session');
+const MySQLStore = require('express-mysql-session')(session);
 const flash = require('connect-flash');
-const cookieParser = require('cookie-parser');
+const passport = require('passport'); 
+const db = require('./config/db');
+require('./config/passport');
 require('dotenv').config();
-const passport = require('passport');
-const { ensureAuthenticated } = require('../middleware/auth');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -14,11 +16,30 @@ const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const jobRoutes = require('./routes/jobs');
 const userRoutes = require('./routes/user');
+const { ensureAuthenticated } = require('./middleware/auth'); // Import middleware
 
 // Middleware setup
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(cookieParser());
+
+// Session setup
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: true,
+    store: new MySQLStore({
+        host: process.env.MYSQLHOST,
+        port: process.env.MYSQLPORT,
+        user: process.env.MYSQLUSER,
+        password: process.env.MYSQLPASSWORD,
+        database: process.env.MYSQLDATABASE
+    }),
+    cookie: { secure: process.env.NODE_ENV === 'production' } // Set to true if using HTTPS
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.use(flash());
 
 // Set view engine and views directory
@@ -29,8 +50,8 @@ app.set('views', path.join(__dirname, 'views'));
 app.use((req, res, next) => {
     res.locals.success_msg = req.flash('success_msg');
     res.locals.error_msg = req.flash('error_msg');
-    res.locals.user = req.cookies.user || null;
-    res.locals.admin = req.cookies.admin || null;
+    res.locals.user = req.session.user || null;
+    res.locals.admin = req.session.admin || null;
     next();
 });
 
@@ -40,9 +61,9 @@ app.get('/', (req, res) => {
 });
 
 app.use('/auth', authRoutes);
-app.use('/admin', adminRoutes);
-app.use('/', jobRoutes);
-app.use('/user', userRoutes);
+app.use('/admin', ensureAuthenticated, adminRoutes);
+app.use('/', ensureAuthenticated, jobRoutes);
+app.use('/user', ensureAuthenticated, userRoutes);
 
 app.get('/admin-login', (req, res) => {
     res.render('admin-login');
@@ -56,23 +77,18 @@ app.get('/login', (req, res) => {
     res.render('login');
 });
 
-app.get('/profile', (req, res) => {
-    if (!req.cookies.user) {
-        return res.redirect('/login');
-    }
-
+app.get('/profile', ensureAuthenticated, (req, res) => {
     const jobsSql = 'SELECT * FROM jobs';
     db.query(jobsSql, (err, jobs) => {
         if (err) {
             req.flash('error_msg', 'Error fetching jobs');
-            return res.redirect('/profile');
+            return res.redirect('/');
         }
-
-        res.render('profile', { user: req.cookies.user, jobs });
+        res.render('profile', { user: req.session.user, jobs });
     });
 });
 
-app.get('/jobs', (req, res) => {
+app.get('/jobs', ensureAuthenticated, (req, res) => {
     const sql = 'SELECT * FROM jobs';
     db.query(sql, (err, results) => {
         if (err) {
@@ -84,25 +100,13 @@ app.get('/jobs', (req, res) => {
 });
 
 app.get('/api/check-login', (req, res) => {
-    if (req.cookies.user) {
-        res.json({ loggedIn: true, username: req.cookies.user.username });
+    if (req.session.user) {
+        res.json({ loggedIn: true, username: req.session.user.username });
     } else {
         res.json({ loggedIn: false });
     }
 });
 
-app.get('/admin-dashboard', (req, res) => {
-    if (!req.cookies.admin) {
-        return res.redirect('/admin-login');
-    }
-    res.render('admin-dashboard');
-});
-
-// Optional: Catch-all route for 404 errors
-app.use((req, res, next) => {
-    res.status(404).send('404 Not Found');
-});
-
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    console.log(`Server running on http://localhost:${PORT}`);
 });
