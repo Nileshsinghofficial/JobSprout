@@ -4,6 +4,7 @@ const flash = require('connect-flash');
 const passport = require('passport');
 const cookieParser = require('cookie-parser');
 require('dotenv').config();
+const { ensureAuthenticated } = require('./middleware/auth'); // Ensure this import is correct
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -56,7 +57,7 @@ app.get('/login', (req, res) => {
     res.render('login');
 });
 
-app.get('/profile', (req, res) => {
+app.get('/profile', ensureAuthenticated, (req, res) => {
     const jobsSql = 'SELECT * FROM jobs';
     db.query(jobsSql, (err, jobs) => {
         if (err) {
@@ -67,7 +68,7 @@ app.get('/profile', (req, res) => {
     });
 });
 
-app.get('/jobs', (req, res) => {
+app.get('/jobs', ensureAuthenticated, (req, res) => {
     const sql = 'SELECT * FROM jobs';
     db.query(sql, (err, results) => {
         if (err) {
