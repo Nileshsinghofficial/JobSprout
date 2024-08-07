@@ -1,5 +1,6 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
+const mysql = require('mysql2');
 
 // Create a new instance of Sequelize with your database configuration
 const sequelize = new Sequelize(process.env.MYSQLDATABASE, process.env.MYSQLUSER, process.env.MYSQLPASSWORD, {
