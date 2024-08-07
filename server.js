@@ -1,10 +1,10 @@
 const express = require('express');
 const path = require('path');
-const flash = require('connect-flash');
-const passport = require('passport');
 const cookieParser = require('cookie-parser');
+const passport = require('passport');
 require('dotenv').config();
-const { ensureAuthenticated } = require('./middleware/auth'); // Ensure this import is correct
+const { ensureAuthenticated } = require('./middleware/auth');
+const flashMiddleware = require('./middleware/flashMiddleware'); // Import custom flash middleware
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -15,8 +15,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Flash messages
-app.use(flash());
+// Use custom flash middleware
+app.use(flashMiddleware);
 
 // View engine setup
 app.set('view engine', 'ejs');
@@ -24,8 +24,8 @@ app.set('views', path.join(__dirname, 'views'));
 
 // Global middleware for flash messages and user info
 app.use((req, res, next) => {
-    res.locals.success_msg = req.flash('success_msg');
-    res.locals.error_msg = req.flash('error_msg');
+    res.locals.success_msg = res.locals.flash.success_msg;
+    res.locals.error_msg = res.locals.flash.error_msg;
     res.locals.user = req.user || null;
     next();
 });
