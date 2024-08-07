@@ -3,7 +3,7 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 require('dotenv').config();
 const { ensureAuthenticated } = require('./middleware/auth');
-const flashMiddleware = require('./middleware/flashMiddleware');
+const flashMiddleware = require('./middleware/flashMiddleware'); // Import custom flash middleware
 const { QueryTypes } = require('sequelize');
 
 const app = express();
@@ -13,6 +13,8 @@ const PORT = process.env.PORT || 8080;
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Use custom flash middleware
 app.use(flashMiddleware);
 
 // View engine setup
@@ -21,8 +23,8 @@ app.set('views', path.join(__dirname, 'views'));
 
 // Global middleware for flash messages and user info
 app.use((req, res, next) => {
-    res.locals.success_msg = res.locals.flash.success_msg;
-    res.locals.error_msg = res.locals.flash.error_msg;
+    res.locals.success_msg = req.flash.success_msg;
+    res.locals.error_msg = req.flash.error_msg;
     res.locals.user = req.user || null;
     next();
 });
@@ -56,26 +58,24 @@ app.get('/login', (req, res) => {
 
 app.get('/profile', ensureAuthenticated, (req, res) => {
     const jobsSql = 'SELECT * FROM jobs';
-    sequelize.query(jobsSql, { type: QueryTypes.SELECT })
-        .then(jobs => {
-            res.render('profile', { user: req.user, jobs });
-        })
-        .catch(err => {
-            req.flash('error_msg', 'Error fetching jobs');
-            res.redirect('/profile');
-        });
+    db.query(jobsSql, (err, jobs) => {
+        if (err) {
+            req.flash.error_msg = 'Error fetching jobs';
+            return res.redirect('/profile');
+        }
+        res.render('profile', { user: req.user, jobs });
+    });
 });
 
 app.get('/jobs', ensureAuthenticated, (req, res) => {
     const sql = 'SELECT * FROM jobs';
-    sequelize.query(sql, { type: QueryTypes.SELECT })
-        .then(results => {
-            res.render('jobs', { jobs: results });
-        })
-        .catch(err => {
-            req.flash('error_msg', 'Error fetching jobs');
-            res.redirect('/');
-        });
+    db.query(sql, (err, results) => {
+        if (err) {
+            req.flash.error_msg = 'Error fetching jobs';
+            return res.redirect('/');
+        }
+        res.render('jobs', { jobs: results });
+    });
 });
 
 app.get('/admin-dashboard', ensureAuthenticated, (req, res) => {

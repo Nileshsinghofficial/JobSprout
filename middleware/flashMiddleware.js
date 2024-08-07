@@ -1,7 +1,11 @@
-function flashMiddleware(req, res, next) {
-    res.locals.flash = req.session.flash || {};
-    delete req.session.flash;
+// middleware/flashMiddleware.js
+module.exports = (req, res, next) => {
+    if (!req.flash) {
+        req.flash = {
+            success_msg: '',
+            error_msg: ''
+        };
+    }
+    res.locals.flash = req.flash;
     next();
-}
-
-module.exports = flashMiddleware;
+};

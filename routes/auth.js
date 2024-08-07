@@ -8,21 +8,23 @@ require('dotenv').config();
 // Registration route
 router.post('/register', async (req, res) => {
     const { username, password } = req.body;
-  
+
     try {
-      // Hash the password
-      const hashedPassword = await bcrypt.hash(password, 10);
-  
-      // Insert the new user into the database
-      await sequelize.query('INSERT INTO admins (username, password) VALUES (:username, :password)', {
-        replacements: { username, password: hashedPassword },
-        type: QueryTypes.INSERT
-      });
-  
-      res.redirect('/login');
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Insert the new user into the database
+        await sequelize.query('INSERT INTO admins (username, password) VALUES (:username, :password)', {
+            replacements: { username, password: hashedPassword },
+            type: QueryTypes.INSERT
+        });
+
+        req.flash.success_msg = 'Registration successful. Please log in.';
+        res.redirect('/login');
     } catch (error) {
-      console.error('Database error:', error);
-      res.status(500).send('Server error');
+        console.error('Database error:', error);
+        req.flash.error_msg = 'Server error during registration';
+        res.redirect('/register');
     }
 });
 
@@ -43,21 +45,21 @@ router.post('/login', async (req, res) => {
             // Verify the password
             const passwordMatch = await bcrypt.compare(password, user.password);
             if (passwordMatch) {
-                // Handle successful login
-                req.session.user = { id: user.id, username: user.username, isAdmin: user.isAdmin };
+                req.user = user; // Simulate setting the user in the session
+                req.flash.success_msg = 'Login successful';
                 res.redirect('/profile');
             } else {
-                // Handle incorrect password
-                res.status(401).send('Invalid username or password');
+                req.flash.error_msg = 'Invalid username or password';
+                res.redirect('/login');
             }
         } else {
-            // Handle user not found
-            res.status(401).send('Invalid username or password');
+            req.flash.error_msg = 'Invalid username or password';
+            res.redirect('/login');
         }
-
     } catch (error) {
         console.error('Database connection error:', error);
-        res.status(500).send('Server error');
+        req.flash.error_msg = 'Server error during login';
+        res.redirect('/login');
     }
 });
 
