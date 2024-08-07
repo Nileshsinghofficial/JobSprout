@@ -8,7 +8,6 @@ const db = require('./config/db');
 require('./config/passport');
 require('dotenv').config();
 
-
 const app = express();
 const PORT = process.env.PORT || 8080;
 
@@ -18,13 +17,24 @@ const adminRoutes = require('./routes/admin');
 const jobRoutes = require('./routes/jobs');
 const userRoutes = require('./routes/user');
 
+// MySQL session store options
+const sessionStore = new MySQLStore({
+    host: process.env.MYSQLHOST,
+    port: process.env.MYSQLPORT,
+    user: process.env.MYSQLUSER,
+    password: process.env.MYSQLPASSWORD,
+    database: process.env.MYSQLDATABASE
+});
+
 // Middleware setup
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Session setup
+// Session setup with MySQLStore
 app.use(session({
+    key: 'session_cookie_name',
     secret: process.env.SESSION_SECRET, 
+    store: sessionStore,
     resave: false,
     saveUninitialized: true,
     cookie: { secure: process.env.NODE_ENV === 'production' } // Set to true if using HTTPS
