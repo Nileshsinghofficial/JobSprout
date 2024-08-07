@@ -4,6 +4,7 @@ const cookieParser = require('cookie-parser');
 require('dotenv').config();
 const { ensureAuthenticated } = require('./middleware/auth');
 const flashMiddleware = require('./middleware/flashMiddleware'); // Import custom flash middleware
+const { Sequelize } = require('sequelize');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
