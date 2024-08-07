@@ -56,31 +56,36 @@ router.post('/register', async (req, res) => {
 
 // Route to render login page
 router.get('/login', (req, res) => {
+    // Store the referrer URL in the session
+    req.session.returnTo = req.headers.referer || '/';
     res.render('login');
 });
 
 // Login route
-router.post('/login', (req, res, next) => {
-    passport.authenticate('local', (err, user, info) => {
+router.post('/login', (req, res) => {
+    const { username, password } = req.body;
+    const sql = 'SELECT * FROM users WHERE username = ?';
+    db.query(sql, [username], async (err, results) => {
         if (err) {
-            return next(err);
+            console.error('An error occurred while querying the database:', err);
+            req.flash('error_msg', 'An error occurred while querying the database');
+            return res.redirect('/login');
         }
-        if (!user) {
+        if (results.length === 0) {
             req.flash('error_msg', 'Invalid username or password');
             return res.redirect('/login');
         }
-        req.logIn(user, (err) => {
-            if (err) {
-                return next(err);
-            }
-            req.session.user = user;
-            if (user.role === 'admin') {
-                res.redirect('/admin-dashboard');
-            } else {
-                res.redirect('/profile');
-            }
-        });
-    })(req, res, next);
+        const user = results[0];
+        const match = await bcrypt.compare(password, user.password);
+        if (!match) {
+            req.flash('error_msg', 'Invalid username or password');
+            return res.redirect('/login');
+        }
+        req.session.user = user;
+        const returnTo = req.session.returnTo || '/';
+        delete req.session.returnTo; // Clear the returnTo session variable
+        res.redirect(returnTo);
+    });
 });
 
 // Route to render profile page

@@ -3,8 +3,7 @@ const path = require('path');
 const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
 const flash = require('connect-flash');
-const passport = require('passport');
-const { ensureAuthenticated } = require('./middleware/auth');
+const passport = require('passport'); 
 const db = require('./config/db');
 require('./config/passport');
 require('dotenv').config();
@@ -17,15 +16,7 @@ const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const jobRoutes = require('./routes/jobs');
 const userRoutes = require('./routes/user');
-
-// MySQL session store options
-const sessionStore = new MySQLStore({
-    host: process.env.MYSQLHOST,
-    port: process.env.MYSQLPORT,
-    user: process.env.MYSQLUSER,
-    password: process.env.MYSQLPASSWORD,
-    database: process.env.MYSQLDATABASE
-});
+const { ensureAuthenticated } = require('./middleware/auth'); // Import middleware
 
 // Middleware setup
 app.use(express.urlencoded({ extended: true }));
@@ -70,8 +61,8 @@ app.get('/', (req, res) => {
 });
 
 app.use('/auth', authRoutes);
-app.use('/admin', adminRoutes);
-app.use('/', ensureAuthenticated, jobRoutes);
+app.use('/admin', ensureAuthenticated, adminRoutes);
+app.use('/', ensureAuthenticated, jobRoutes); // Ensure this line is not causing a loop
 app.use('/user', ensureAuthenticated, userRoutes);
 
 app.get('/admin-login', (req, res) => {
@@ -87,17 +78,12 @@ app.get('/login', (req, res) => {
 });
 
 app.get('/profile', ensureAuthenticated, (req, res) => {
-    if (!req.session.user) {
-        return res.redirect('/login');
-    }
-
     const jobsSql = 'SELECT * FROM jobs';
     db.query(jobsSql, (err, jobs) => {
         if (err) {
             req.flash('error_msg', 'Error fetching jobs');
-            return res.redirect('/profile');
+            return res.redirect('/');
         }
-
         res.render('profile', { user: req.session.user, jobs });
     });
 });
@@ -121,18 +107,6 @@ app.get('/api/check-login', (req, res) => {
     }
 });
 
-app.get('/admin-dashboard', (req, res) => {
-    if (!req.session.admin) {
-        return res.redirect('/admin-login');
-    }
-    res.render('admin-dashboard');
-});
-
-// Optional: Catch-all route for 404 errors
-app.use((req, res, next) => {
-    res.status(404).send('404 Not Found');
-});
-
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    console.log(`Server running on http://localhost:${PORT}`);
 });
