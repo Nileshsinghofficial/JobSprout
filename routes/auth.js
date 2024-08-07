@@ -1,53 +1,42 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
-const crypto = require('crypto');
-const db = require('../config/db');
-const { ensureAuthenticated } = require('../middleware/auth');
+const sequelize = require('../config/db'); // Adjust the path as needed
+const { QueryTypes } = require('sequelize');
+require('dotenv').config();
 
 // Login route
 router.post('/login', async (req, res) => {
-    const { username, password } = req.body;
+  const { username, password } = req.body;
 
-    const sql = 'SELECT * FROM users WHERE username = ?';
-    db.query(sql, [username], async (err, results) => {
-        if (err) {
-            console.error('Database query error:', err);
-            req.flash('error_msg', 'An error occurred');
-            return res.redirect('/login');
-        }
-        if (results.length === 0) {
-            req.flash('error_msg', 'Invalid username or password');
-            return res.redirect('/login');
-        }
-
-        const user = results[0];
-        const match = await bcrypt.compare(password, user.password);
-        if (!match) {
-            req.flash('error_msg', 'Invalid username or password');
-            return res.redirect('/login');
-        }
-
-        // Generate and set token for authentication
-        const authToken = crypto.randomBytes(30).toString('hex');
-        const expiresAt = new Date(Date.now() + 3600000); // Token expires in 1 hour
-
-        // Store the token in the database
-        await Token.create({
-            token: authToken,
-            user_id: user.id,
-            expires_at: expiresAt
-        });
-
-        res.cookie('authToken', authToken, { httpOnly: true });
-        res.redirect('/profile');
+  try {
+    // Execute the query with parameters
+    const users = await sequelize.query('SELECT * FROM admins WHERE username = :username', {
+      replacements: { username },
+      type: QueryTypes.SELECT
     });
-});
 
-// Logout route
-router.get('/logout', (req, res) => {
-    res.clearCookie('authToken');
-    res.redirect('/login');
+    if (users.length > 0) {
+      const user = users[0];
+
+      // Verify the password
+      const passwordMatch = await bcrypt.compare(password, user.password);
+      if (passwordMatch) {
+        // Handle successful login
+        res.send('Login successful');
+      } else {
+        // Handle incorrect password
+        res.status(401).send('Invalid username or password');
+      }
+    } else {
+      // Handle user not found
+      res.status(401).send('Invalid username or password');
+    }
+
+  } catch (error) {
+    console.error('Database connection error:', error);
+    res.status(500).send('Server error');
+  }
 });
 
 module.exports = router;
