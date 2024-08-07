@@ -2,10 +2,20 @@ const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
+const MySQLStore = require('express-mysql-session')(session);
 require('dotenv').config();
 const { ensureAuthenticated } = require('./middleware/auth');
 const flashMiddleware = require('./middleware/flashMiddleware'); // Import custom flash middleware
 const { QueryTypes } = require('sequelize');
+
+// Set up the session store with MySQL
+const sessionStore = new MySQLStore({
+    host: process.env.MYSQLHOST,
+    port: process.env.MYSQLPORT,
+    user: process.env.MYSQLUSER,
+    password: process.env.MYSQLPASSWORD,
+    database: process.env.MYSQLDATABASE
+});
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -17,7 +27,8 @@ app.use(cookieParser());
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
-    saveUninitialized: true
+    saveUninitialized: true,
+    store: sessionStore // Use MySQL store for session storage
 }));
 app.use(express.static(path.join(__dirname, 'public')));
 
