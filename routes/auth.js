@@ -5,6 +5,27 @@ const sequelize = require('../config/db'); // Adjust the path as needed
 const { QueryTypes } = require('sequelize');
 require('dotenv').config();
 
+// Registration route
+router.post('/register', async (req, res) => {
+    const { username, password } = req.body;
+  
+    try {
+      // Hash the password
+      const hashedPassword = await bcrypt.hash(password, 10);
+  
+      // Insert the new user into the database
+      await sequelize.query('INSERT INTO admins (username, password) VALUES (:username, :password)', {
+        replacements: { username, password: hashedPassword },
+        type: QueryTypes.INSERT
+      });
+  
+      res.send('Registration successful');
+    } catch (error) {
+      console.error('Database error:', error);
+      res.status(500).send('Server error');
+    }
+  });
+
 // Login route
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
@@ -38,5 +59,4 @@ router.post('/login', async (req, res) => {
     res.status(500).send('Server error');
   }
 });
-
 module.exports = router;
