@@ -1,5 +1,6 @@
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
+const bcrypt = require('bcryptjs');
 const db = require('./db');
 
 passport.use(new LocalStrategy(
@@ -7,13 +8,12 @@ passport.use(new LocalStrategy(
         const sql = 'SELECT * FROM users WHERE username = ?';
         db.query(sql, [username], (err, results) => {
             if (err) return done(err);
-            if (results.length === 0) return done(null, false);
+            if (results.length === 0) return done(null, false, { message: 'Incorrect username.' });
             const user = results[0];
-            // Assuming you are using bcrypt for password hashing
             bcrypt.compare(password, user.password, (err, isMatch) => {
                 if (err) return done(err);
                 if (isMatch) return done(null, user);
-                else return done(null, false);
+                else return done(null, false, { message: 'Incorrect password.' });
             });
         });
     }
@@ -30,3 +30,5 @@ passport.deserializeUser(function(id, done) {
         done(null, results[0]);
     });
 });
+
+module.exports = passport;

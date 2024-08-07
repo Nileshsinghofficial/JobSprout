@@ -30,13 +30,18 @@ const sessionStore = new MySQLStore({
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Session setup with MySQLStore
+// Session setup
 app.use(session({
-    key: 'session_cookie_name',
-    secret: process.env.SESSION_SECRET, 
-    store: sessionStore,
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: true,
+    store: new MySQLStore({
+        host: process.env.MYSQLHOST,
+        port: process.env.MYSQLPORT,
+        user: process.env.MYSQLUSER,
+        password: process.env.MYSQLPASSWORD,
+        database: process.env.MYSQLDATABASE
+    }),
     cookie: { secure: process.env.NODE_ENV === 'production' } // Set to true if using HTTPS
 }));
 
@@ -65,8 +70,8 @@ app.get('/', (req, res) => {
 
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
-app.use('/', jobRoutes);
-app.use('/user', userRoutes);
+app.use('/', ensureAuthenticated, jobRoutes);
+app.use('/user', ensureAuthenticated, userRoutes);
 
 app.get('/admin-login', (req, res) => {
     res.render('admin-login');
@@ -80,7 +85,7 @@ app.get('/login', (req, res) => {
     res.render('login');
 });
 
-app.get('/profile', (req, res) => {
+app.get('/profile', ensureAuthenticated, (req, res) => {
     if (!req.session.user) {
         return res.redirect('/login');
     }
@@ -96,7 +101,7 @@ app.get('/profile', (req, res) => {
     });
 });
 
-app.get('/jobs', (req, res) => {
+app.get('/jobs', ensureAuthenticated, (req, res) => {
     const sql = 'SELECT * FROM jobs';
     db.query(sql, (err, results) => {
         if (err) {
