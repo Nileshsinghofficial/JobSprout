@@ -4,6 +4,7 @@ const flash = require('connect-flash');
 const cookieParser = require('cookie-parser');
 require('dotenv').config();
 const passport = require('passport');
+const { ensureAuthenticated } = require('../middleware/auth');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
