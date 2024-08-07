@@ -3,7 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const db = require('../config/db'); // Ensure this is set up to interact with your PostgreSQL database
-const { ensureAuthenticated } = require('./middleware/auth');
+const { ensureAuthenticated } = require('../middleware/auth');
 
 // EnsureAuthenticated middleware
 module.exports.ensureAuthenticated = async (req, res, next) => {
