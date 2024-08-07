@@ -7,23 +7,29 @@ require('dotenv').config();
 
 // Registration route
 router.post('/register', async (req, res) => {
-    const { username, password } = req.body;
+    const { username, email, password, confirmPassword, checkbox } = req.body;
+
+    if (password !== confirmPassword) {
+        req.flash('error_msg', 'Passwords do not match');
+        return res.redirect('/register');
+    }
+
+    if (!checkbox) {
+        req.flash('error_msg', 'You must agree to the terms and conditions');
+        return res.redirect('/register');
+    }
 
     try {
-        // Hash the password
         const hashedPassword = await bcrypt.hash(password, 10);
-
-        // Insert the new user into the database
-        await sequelize.query('INSERT INTO admins (username, password) VALUES (:username, :password)', {
-            replacements: { username, password: hashedPassword },
+        await sequelize.query('INSERT INTO users (username, password, email) VALUES (:username, :password, :email)', {
+            replacements: { username, password: hashedPassword, email },
             type: QueryTypes.INSERT
         });
-
-        req.flash.success_msg = 'Registration successful. Please log in.';
+        req.flash('success_msg', 'Registration successful. Please log in.');
         res.redirect('/login');
     } catch (error) {
         console.error('Database error:', error);
-        req.flash.error_msg = 'Server error during registration';
+        req.flash('error_msg', 'Server error during registration');
         res.redirect('/register');
     }
 });
