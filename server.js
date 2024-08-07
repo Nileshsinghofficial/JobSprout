@@ -6,37 +6,37 @@ const passport = require('passport');
 const db = require('./config/db');
 require('./config/passport');
 require('dotenv').config();
+const SequelizeStore = require('connect-session-sequelize')(session.Store);
 
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// Import routes
-const authRoutes = require('./routes/auth');
-const adminRoutes = require('./routes/admin');
-const jobRoutes = require('./routes/jobs');
-const userRoutes = require('./routes/user');
+// Set up the Sequelize session store
+const sessionStore = new SequelizeStore({
+    db: db,
+    checkExpirationInterval: 15 * 60 * 1000, // The interval at which to cleanup expired sessions in milliseconds
+    expiration: 7 * 24 * 60 * 60 * 1000 // The maximum age (in milliseconds) of a valid session
+});
 
-// Import middleware
-const { ensureAuthenticated } = require('./middleware/auth');
-
-// Middleware setup
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Session setup
 app.use(session({
     secret: process.env.SESSION_SECRET, 
+    store: sessionStore,
     resave: false,
     saveUninitialized: true,
     cookie: { secure: process.env.NODE_ENV === 'production' } // Set to true if using HTTPS
 }));
+
+// Create the session table if it doesn't exist
+sessionStore.sync();
 
 app.use(passport.initialize());
 app.use(passport.session());
 
 app.use(flash());
 
-// Set view engine and views directory
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
+
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
@@ -53,6 +53,12 @@ app.use((req, res, next) => {
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'home.html'));
 });
+
+const authRoutes = require('./routes/auth');
+const adminRoutes = require('./routes/admin');
+const jobRoutes = require('./routes/jobs');
+const userRoutes = require('./routes/user');
+const { ensureAuthenticated } = require('./middleware/auth');
 
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);
@@ -108,7 +114,6 @@ app.get('/admin-dashboard', ensureAuthenticated, (req, res) => {
     res.render('admin-dashboard');
 });
 
-// Optional: Catch-all route for 404 errors
 app.use((req, res, next) => {
     res.status(404).send('404 Not Found');
 });

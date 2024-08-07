@@ -1,23 +1,21 @@
-const bcrypt = require('bcryptjs');
+const { Sequelize } = require('sequelize');
 const path = require('path');
 const mysql = require('mysql2');
 require('dotenv').config();
 const fs = require('fs');
 
 // Create a connection to the railway MySQL database
-const db = mysql.createConnection({
+const sequelize = new Sequelize(process.env.MYSQLDATABASE, process.env.MYSQLUSER, process.env.MYSQLPASSWORD, {
     host: process.env.MYSQLHOST,
-    user: process.env.MYSQLUSER,
-    password: process.env.MYSQLPASSWORD,
-    database: process.env.MYSQLDATABASE,
+    dialect: 'mysql',
     port: process.env.MYSQLPORT,
-    ssl: {
-        ca: fs.readFileSync(path.join(__dirname, 'ca.pem')),
-        rejectUnauthorized: false
-    },
-    connectTimeout: 10000 // 10 seconds
+    dialectOptions: {
+        ssl: {
+            ca: fs.readFileSync(path.join(__dirname, 'ca.pem')),
+            rejectUnauthorized: false
+        }
+    }
 });
-
 // // Create a connection to the local MySQL database
 // const db = mysql.createConnection({
 //     host: process.env.DB_HOST,
