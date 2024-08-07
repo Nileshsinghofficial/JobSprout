@@ -4,7 +4,6 @@ const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 const { ensureAuthenticated } = require('../middleware/auth');
 
-
 // Route to render admin registration page
 router.get('/admin-register', (req, res) => {
     res.render('admin-register');
@@ -68,13 +67,15 @@ router.post('/admin-login', async (req, res) => {
             req.flash('error_msg', 'Invalid username or password');
             return res.redirect('/admin-login');
         }
+
+        // Use session or another mechanism for authentication
         req.session.admin = admin;
         res.redirect('/admin/dashboard');
     });
 });
 
 // Admin dashboard route
-router.get('/dashboard', (req, res) => {
+router.get('/dashboard', ensureAuthenticated, (req, res) => {
     const sql = 'SELECT * FROM jobs';
     db.query(sql, (err, results) => {
         if (err) {
@@ -87,7 +88,7 @@ router.get('/dashboard', (req, res) => {
 });
 
 // Add Job route
-router.post('/add-job',  (req, res) => {
+router.post('/add-job', ensureAuthenticated, (req, res) => {
     const { title, description, author } = req.body;
     const sql = 'INSERT INTO jobs (title, description, author) VALUES (?, ?, ?)';
     db.query(sql, [title, description, author], (err, result) => {
@@ -102,7 +103,7 @@ router.post('/add-job',  (req, res) => {
 });
 
 // Edit Job route
-router.get('/edit-job/:id', (req, res) => {
+router.get('/edit-job/:id', ensureAuthenticated, (req, res) => {
     const jobId = req.params.id;
     const sql = 'SELECT * FROM jobs WHERE id = ?';
     db.query(sql, [jobId], (err, results) => {
@@ -116,7 +117,7 @@ router.get('/edit-job/:id', (req, res) => {
     });
 });
 
-router.post('/edit-job/:id', (req, res) => {
+router.post('/edit-job/:id', ensureAuthenticated, (req, res) => {
     const jobId = req.params.id;
     const { title, description, author } = req.body;
     const sql = 'UPDATE jobs SET title = ?, description = ?, author = ? WHERE id = ?';

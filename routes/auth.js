@@ -2,17 +2,37 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
-const db = require('../config/db');
-const { ensureAuthenticated } = require('../middleware/auth');
-
-const users = {}; // Simulating a simple in-memory user store. Replace with your user fetching logic.
+const db = require('../config/db'); // Ensure this is set up to interact with your PostgreSQL database
 
 // EnsureAuthenticated middleware
-module.exports.ensureAuthenticated = (req, res, next) => {
+module.exports.ensureAuthenticated = async (req, res, next) => {
     const authToken = req.cookies['authToken'];
-    if (authToken && users[authToken]) {
-        req.user = users[authToken];
-        return next();
+    if (authToken) {
+        try {
+            // Check if the token exists and is not expired
+            const tokenSql = 'SELECT * FROM tokens WHERE token = ? AND expires_at > NOW()';
+            db.query(tokenSql, [authToken], (err, results) => {
+                if (err || results.length === 0) {
+                    req.flash('error_msg', 'Invalid or expired token');
+                    return res.redirect('/login');
+                }
+
+                // Fetch the associated user
+                const userSql = 'SELECT * FROM users WHERE id = ?';
+                db.query(userSql, [results[0].user_id], (err, userResults) => {
+                    if (err || userResults.length === 0) {
+                        req.flash('error_msg', 'User not found');
+                        return res.redirect('/login');
+                    }
+                    req.user = userResults[0];
+                    return next();
+                });
+            });
+        } catch (err) {
+            console.error('Error checking authentication:', err);
+            req.flash('error_msg', 'An error occurred');
+            res.redirect('/login');
+        }
     } else {
         req.flash('error_msg', 'Please log in to view that resource');
         res.redirect('/login');
@@ -51,7 +71,7 @@ router.post('/register', async (req, res) => {
             // If username is available, hash the password and insert the new user
             const hashedPassword = await bcrypt.hash(password, 10);
             const sql = 'INSERT INTO users (username, password, checkbox) VALUES (?, ?, ?)';
-            db.query(sql, [username, hashedPassword, checkbox ? 1 : 0], (err, result) => {
+            db.query(sql, [username, hashedPassword, checkbox ? 1 : 0], (err) => {
                 if (err) {
                     console.error('Error registering user:', err);
                     req.flash('error_msg', 'Error registering user');
@@ -93,13 +113,22 @@ router.post('/login', async (req, res) => {
 
         const user = results[0];
         const authToken = crypto.randomBytes(30).toString('hex');
-        users[authToken] = { id: user.id, username: user.username, isAdmin: user.isAdmin };
-        
-        res.cookie('authToken', authToken, { httpOnly: true });
-        if (user.isAdmin) {
-            return res.redirect('/admin-dashboard');
-        }
-        res.redirect('/profile');
+
+        // Store the token in the database
+        const tokenSql = 'INSERT INTO tokens (token, user_id, expires_at) VALUES (?, ?, ?)';
+        const expiresAt = new Date(Date.now() + 3600000); // Token expires in 1 hour
+        db.query(tokenSql, [authToken, user.id, expiresAt], (err) => {
+            if (err) {
+                console.error('Error storing token:', err);
+                req.flash('error_msg', 'Error logging in');
+                return res.redirect('/login');
+            }
+            res.cookie('authToken', authToken, { httpOnly: true });
+            if (user.isAdmin) {
+                return res.redirect('/admin-dashboard');
+            }
+            res.redirect('/profile');
+        });
     });
 });
 
@@ -117,14 +146,25 @@ router.get('/profile', ensureAuthenticated, (req, res) => {
 });
 
 // Logout route
-router.get('/logout', (req, res) => {
+router.get('/logout', async (req, res) => {
     const authToken = req.cookies['authToken'];
     if (authToken) {
-        delete users[authToken];
-        res.clearCookie('authToken');
+        // Remove token from the database
+        const deleteTokenSql = 'DELETE FROM sessions WHERE session_Id = ?';
+        db.query(deleteTokenSql, [authToken], (err) => {
+            if (err) {
+                console.error('Error deleting token:', err);
+                req.flash('error_msg', 'Error logging out');
+                return res.redirect('/profile');
+            }
+            res.clearCookie('authToken');
+            req.flash('success_msg', 'You are logged out');
+            res.redirect('/login');
+        });
+    } else {
+        req.flash('error_msg', 'No token found');
+        res.redirect('/login');
     }
-    req.flash('success_msg', 'You are logged out');
-    res.redirect('/login');
 });
 
 module.exports = router;
