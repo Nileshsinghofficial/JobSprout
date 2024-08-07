@@ -7,14 +7,14 @@ const fs = require('fs');
 // Create a connection to the railway MySQL database
 const sequelize = new Sequelize(process.env.MYSQLDATABASE, process.env.MYSQLUSER, process.env.MYSQLPASSWORD, {
     host: process.env.MYSQLHOST,
-    dialect: 'mysql',
+    dialect: 'mysql2',
     port: process.env.MYSQLPORT,
-    dialectOptions: {
-        ssl: {
-            ca: fs.readFileSync(path.join(__dirname, 'ca.pem')),
-            rejectUnauthorized: false
-        }
-    }
+    // dialectOptions: {
+    //     ssl: {
+    //         // ca: fs.readFileSync(path.join(__dirname, 'ca.pem')),
+    //         rejectUnauthorized: false
+    //     }
+    // }
 });
 // // Create a connection to the local MySQL database
 // const db = mysql.createConnection({
