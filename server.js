@@ -11,22 +11,22 @@ const MySQLStore = require('connect-mysql')(session);
 const mysql = require('mysql2');
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.MYSQLPORT || 8080;
 // MySQL database connection
 const dbConnection = mysql.createPool({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USERNAME,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DATABASE
+    host: process.env.MYSQLHOST,
+    user: process.env.MYSQLUSER,
+    password: process.env.MYSQLPASSWORD,
+    database: process.env.MYSQLDATABASE
 });
 
 // Session store setup
 const sessionStore = new MySQLStore({
     config: {
-        host: process.env.DB_HOST,
-        user: process.env.DB_USERNAME,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DATABASE
+        host: process.env.MYSQLHOST,
+        user: process.env.MYSQLUSERE,
+        password: process.env.MYSQLPASSWORD,
+        database: process.env.MYSQLDATABASE
     }
 });
 // Middleware
