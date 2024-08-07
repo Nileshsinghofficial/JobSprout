@@ -1,7 +1,6 @@
 const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
-const passport = require('passport');
 require('dotenv').config();
 const { ensureAuthenticated } = require('./middleware/auth');
 const flashMiddleware = require('./middleware/flashMiddleware'); // Import custom flash middleware
@@ -77,15 +76,6 @@ app.get('/jobs', ensureAuthenticated, (req, res) => {
         }
         res.render('jobs', { jobs: results });
     });
-});
-
-app.get('/api/check-login', (req, res) => {
-    const authToken = req.cookies['authToken'];
-    if (authToken && users[authToken]) {
-        res.json({ loggedIn: true, username: users[authToken].username });
-    } else {
-        res.json({ loggedIn: false });
-    }
 });
 
 app.get('/admin-dashboard', ensureAuthenticated, (req, res) => {

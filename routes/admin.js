@@ -26,7 +26,6 @@ router.post('/admin-register', async (req, res) => {
                 return res.redirect('/admin/admin-register');
             }
 
-            // If username is available, hash the password
             const hashedPassword = await bcrypt.hash(password, 10);
             const sql = 'INSERT INTO admins (username, password) VALUES (?, ?)';
             db.query(sql, [username, hashedPassword], (err, result) => {
@@ -68,9 +67,19 @@ router.post('/admin-login', async (req, res) => {
             return res.redirect('/admin-login');
         }
 
-        // Use session or another mechanism for authentication
-        req.session.admin = admin;
-        res.redirect('/admin/dashboard');
+        // Generate and set token for authentication
+        const authToken = crypto.randomBytes(30).toString('hex');
+        const expiresAt = new Date(Date.now() + 3600000); // Token expires in 1 hour
+
+        // Store the token in the database
+        await Token.create({
+            token: authToken,
+            user_id: admin.id,
+            expires_at: expiresAt
+        });
+
+        res.cookie('authToken', authToken, { httpOnly: true });
+        res.redirect('/admin-dashboard');
     });
 });
 
@@ -133,7 +142,7 @@ router.post('/edit-job/:id', ensureAuthenticated, (req, res) => {
 });
 
 // Delete Job route
-router.post('/delete-job/:id', ensureAuthenticated, (req, res) => {
+router.get('/delete-job/:id', ensureAuthenticated, (req, res) => {
     const jobId = req.params.id;
     const sql = 'DELETE FROM jobs WHERE id = ?';
     db.query(sql, [jobId], (err, result) => {
@@ -144,17 +153,6 @@ router.post('/delete-job/:id', ensureAuthenticated, (req, res) => {
         }
         req.flash('success_msg', 'Job deleted successfully');
         res.redirect('/admin/dashboard');
-    });
-});
-
-// Admin logout route
-router.get('/logout', (req, res) => {
-    req.session.destroy(err => {
-        if (err) {
-            req.flash('error_msg', 'Error logging out');
-            return res.redirect('/admin/dashboard');
-        }
-        res.redirect('/');
     });
 });
 
