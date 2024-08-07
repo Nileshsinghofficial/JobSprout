@@ -5,17 +5,19 @@ require('dotenv').config();
 const fs = require('fs');
 
 // Create a connection to the railway MySQL database
-const sequelize = new Sequelize(process.env.MYSQLDATABASE, process.env.MYSQLUSER, process.env.MYSQLPASSWORD, {
+const db = mysql.createConnection({
     host: process.env.MYSQLHOST,
-    dialect: 'mysql',
+    user: process.env.MYSQLUSER,
+    password: process.env.MYSQLPASSWORD,
+    database: process.env.MYSQLDATABASE,
     port: process.env.MYSQLPORT,
-    // dialectOptions: {
-    //     ssl: {
-    //         // ca: fs.readFileSync(path.join(__dirname, 'ca.pem')),
-    //         rejectUnauthorized: false
-    //     }
-    // }
+    ssl: {
+        ca: fs.readFileSync(path.join(__dirname, 'ca.pem')),
+        rejectUnauthorized: false
+    },
+    connectTimeout: 10000 // 10 seconds
 });
+
 // // Create a connection to the local MySQL database
 // const db = mysql.createConnection({
 //     host: process.env.DB_HOST,
