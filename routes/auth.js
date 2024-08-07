@@ -53,7 +53,6 @@ router.post('/register', async (req, res) => {
         res.redirect('/register');
     }
 });
-
 // Route to render login page
 router.get('/login', (req, res) => {
     res.render('login');
