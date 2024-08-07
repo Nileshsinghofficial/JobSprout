@@ -7,10 +7,28 @@ const flash = require('connect-flash');
 const { ensureAuthenticated } = require('./middleware/auth');
 const flashMiddleware = require('./middleware/flashMiddleware'); // Import custom flash middleware
 const { QueryTypes } = require('sequelize');
+const MySQLStore = require('connect-mysql')(session);
+const mysql = require('mysql2');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
+// MySQL database connection
+const dbConnection = mysql.createPool({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USERNAME,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DATABASE
+});
 
+// Session store setup
+const sessionStore = new MySQLStore({
+    config: {
+        host: process.env.DB_HOST,
+        user: process.env.DB_USERNAME,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DATABASE
+    }
+});
 // Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
