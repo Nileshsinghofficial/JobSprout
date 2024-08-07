@@ -1,29 +1,28 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
-const sequelize = require('../config/db');
+const sequelize = require('../config/db'); // Adjust the path as needed
 const { QueryTypes } = require('sequelize');
 require('dotenv').config();
 
 // Registration route
 router.post('/register', async (req, res) => {
     const { username, password } = req.body;
-
+  
     try {
-        // Hash the password
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        // Insert the new user into the database
-        await sequelize.query('INSERT INTO admins (username, password) VALUES (:username, :password)', {
-            replacements: { username, password: hashedPassword },
-            type: QueryTypes.INSERT
-        });
-
-        // Redirect to the login page after successful registration
-        res.redirect('/login');
+      // Hash the password
+      const hashedPassword = await bcrypt.hash(password, 10);
+  
+      // Insert the new user into the database
+      await sequelize.query('INSERT INTO admins (username, password) VALUES (:username, :password)', {
+        replacements: { username, password: hashedPassword },
+        type: QueryTypes.INSERT
+      });
+  
+      res.redirect('/login');
     } catch (error) {
-        console.error('Database error:', error);
-        res.status(500).send('Server error');
+      console.error('Database error:', error);
+      res.status(500).send('Server error');
     }
 });
 
@@ -44,10 +43,8 @@ router.post('/login', async (req, res) => {
             // Verify the password
             const passwordMatch = await bcrypt.compare(password, user.password);
             if (passwordMatch) {
-                // Store user session data
-                req.session.user = user;
-
-                // Redirect to the profile page after successful login
+                // Handle successful login
+                req.session.user = { id: user.id, username: user.username, isAdmin: user.isAdmin };
                 res.redirect('/profile');
             } else {
                 // Handle incorrect password
@@ -57,11 +54,15 @@ router.post('/login', async (req, res) => {
             // Handle user not found
             res.status(401).send('Invalid username or password');
         }
+
     } catch (error) {
         console.error('Database connection error:', error);
         res.status(500).send('Server error');
     }
 });
+
+module.exports = router;
+
 // Profile route
 router.get('/profile', (req, res) => {
     if (req.session.user) {

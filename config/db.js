@@ -1,19 +1,11 @@
 const { Sequelize } = require('sequelize');
-const path = require('path');
 require('dotenv').config();
-const fs = require('fs');
 
 // Create a new instance of Sequelize with your database configuration
 const sequelize = new Sequelize(process.env.MYSQLDATABASE, process.env.MYSQLUSER, process.env.MYSQLPASSWORD, {
     host: process.env.MYSQLHOST,
     dialect: 'mysql',
     port: process.env.MYSQLPORT,
-    // dialectOptions: {
-    //     ssl: {
-    //         ca: fs.readFileSync(path.join(__dirname, 'ca.pem')),
-    //         rejectUnauthorized: false
-    //     }
-    // },
     logging: false,
     connectTimeout: 10000 // 10 seconds
 });
