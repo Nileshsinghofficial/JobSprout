@@ -7,7 +7,7 @@ const fs = require('fs');
 // Create a connection to the railway MySQL database
 const sequelize = new Sequelize(process.env.MYSQLDATABASE, process.env.MYSQLUSER, process.env.MYSQLPASSWORD, {
     host: process.env.MYSQLHOST,
-    dialect: 'mysql2',
+    dialect: 'mysql',
     port: process.env.MYSQLPORT,
     // dialectOptions: {
     //     ssl: {
