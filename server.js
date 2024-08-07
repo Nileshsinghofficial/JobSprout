@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
+const session = require('express-session');
 require('dotenv').config();
 const { ensureAuthenticated } = require('./middleware/auth');
 const flashMiddleware = require('./middleware/flashMiddleware'); // Import custom flash middleware
@@ -12,25 +13,22 @@ const PORT = process.env.PORT || 8080;
 // Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-// app.use(session({
-//     secret: process.env.SESSION_SECRET,
-//     resave: false,
-//     saveUninitialized: true
-// }));
+app.use(cookieParser());
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: true
+}));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Use custom flash middleware
 app.use(flashMiddleware);
 
-// View engine setup
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
-
 // Global middleware for flash messages and user info
 app.use((req, res, next) => {
     res.locals.success_msg = res.locals.flash.success_msg;
     res.locals.error_msg = res.locals.flash.error_msg;
-    res.locals.user = req.user || null;
+    res.locals.user = req.session.user || null;
     next();
 });
 
@@ -63,28 +61,30 @@ app.get('/login', (req, res) => {
 
 app.get('/profile', ensureAuthenticated, (req, res) => {
     const jobsSql = 'SELECT * FROM jobs';
-    db.query(jobsSql, (err, jobs) => {
-        if (err) {
+    sequelize.query(jobsSql, { type: QueryTypes.SELECT })
+        .then(jobs => {
+            res.render('profile', { user: req.session.user, jobs });
+        })
+        .catch(err => {
             req.flash('error_msg', 'Error fetching jobs');
-            return res.redirect('/profile');
-        }
-        res.render('profile', { user: req.user, jobs });
-    });
+            res.redirect('/profile');
+        });
 });
 
 app.get('/jobs', ensureAuthenticated, (req, res) => {
     const sql = 'SELECT * FROM jobs';
-    db.query(sql, (err, results) => {
-        if (err) {
+    sequelize.query(sql, { type: QueryTypes.SELECT })
+        .then(results => {
+            res.render('jobs', { jobs: results });
+        })
+        .catch(err => {
             req.flash('error_msg', 'Error fetching jobs');
-            return res.redirect('/');
-        }
-        res.render('jobs', { jobs: results });
-    });
+            res.redirect('/');
+        });
 });
 
 app.get('/admin-dashboard', ensureAuthenticated, (req, res) => {
-    if (!req.user.isAdmin) {
+    if (!req.session.user || !req.session.user.isAdmin) {
         return res.redirect('/admin-login');
     }
     res.render('admin-dashboard');
