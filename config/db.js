@@ -31,17 +31,20 @@ const sequelize = new Sequelize(process.env.MYSQLDATABASE, process.env.MYSQLUSER
 // });
 
 // Handle connection errors
-db.on('error', (err) => {
-    console.error('Database error:', err);
-});
+// db.on('error', (err) => {
+//     console.error('Database error:', err);
+// });
 
-// Connect to the database
-db.connect((err) => {
-    if (err) {
-        console.error('Database connection error:', err);
-        return;
-    }
-    console.log('Connected to the MySQL server.');
-});
+// // Connect to the database
+// db.connect((err) => {
+//     if (err) {
+//         console.error('Database connection error:', err);
+//         return;
+//     }
+//     console.log('Connected to the MySQL server.');
+// });
+sequelize.authenticate()
+    .then(() => console.log('Connected to the MySQL server.'))
+    .catch(err => console.error('Database connection error:', err));
 
 module.exports = db;
