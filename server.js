@@ -12,11 +12,11 @@ const PORT = process.env.PORT || 8080;
 // Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: true
-}));
+// app.use(session({
+//     secret: process.env.SESSION_SECRET,
+//     resave: false,
+//     saveUninitialized: true
+// }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Use custom flash middleware
