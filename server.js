@@ -2,6 +2,8 @@ const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 require('dotenv').config();
+const session = require('express-session');
+const flash = require('connect-flash');
 const { ensureAuthenticated } = require('./middleware/auth');
 const flashMiddleware = require('./middleware/flashMiddleware'); // Import custom flash middleware
 const { QueryTypes } = require('sequelize');
@@ -13,6 +15,14 @@ const PORT = process.env.PORT || 8080;
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'default_secret',
+    resave: false,
+    saveUninitialized: true
+}));
+
+app.use(flash());
 
 // Use custom flash middleware
 app.use(flashMiddleware);
