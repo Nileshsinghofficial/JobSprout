@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
-const sequelize = require('../config/db'); // Adjust the path as needed
+const sequelize = require('../config/db'); // Ensure the correct path
 const { QueryTypes } = require('sequelize');
 require('dotenv').config();
 
@@ -39,7 +39,6 @@ router.post('/login', async (req, res) => {
     const { username, password } = req.body;
 
     try {
-        // Execute the query with parameters
         const users = await sequelize.query('SELECT * FROM admins WHERE username = :username', {
             replacements: { username },
             type: QueryTypes.SELECT
@@ -48,36 +47,24 @@ router.post('/login', async (req, res) => {
         if (users.length > 0) {
             const user = users[0];
 
-            // Verify the password
             const passwordMatch = await bcrypt.compare(password, user.password);
             if (passwordMatch) {
-                req.user = user; // Simulate setting the user in the session
-                req.flash.success_msg = 'Login successful';
+                req.user = user;
+                req.flash('success_msg', 'Login successful');
                 res.redirect('/profile');
             } else {
-                req.flash.error_msg = 'Invalid username or password';
+                req.flash('error_msg', 'Invalid username or password');
                 res.redirect('/login');
             }
         } else {
-            req.flash.error_msg = 'Invalid username or password';
+            req.flash('error_msg', 'Invalid username or password');
             res.redirect('/login');
         }
     } catch (error) {
         console.error('Database connection error:', error);
-        req.flash.error_msg = 'Server error during login';
+        req.flash('error_msg', 'Server error during login');
         res.redirect('/login');
     }
 });
-
-module.exports = router;
-
-// // Profile route
-// router.get('/profile', (req, res) => {
-//     if (req.session.user) {
-//         res.send(`Welcome, ${req.session.user.username}`);
-//     } else {
-//         res.redirect('/login');
-//     }
-// });
 
 module.exports = router;
