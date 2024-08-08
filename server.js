@@ -32,13 +32,25 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'home.html'));
 });
 
-app.get('/profile', ensureAuthenticated, (req, res) => {
-    res.render('profile', {
-        user: req.user,
-        success_msg: req.flash('success_msg'),
-        error_msg: req.flash('error_msg')
-    });
+app.get('/profile', ensureAuthenticated, async (req, res) => {
+    try {
+        const jobs = await sequelize.query('SELECT * FROM jobs', {
+            type: QueryTypes.SELECT
+        });
+
+        res.render('profile', {
+            user: req.user,
+            jobs,
+            success_msg: req.flash('success_msg'),
+            error_msg: req.flash('error_msg')
+        });
+    } catch (error) {
+        console.error('Database error:', error);
+        req.flash('error_msg', 'Server error fetching jobs');
+        res.redirect('/');
+    }
 });
+
 // Server
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
