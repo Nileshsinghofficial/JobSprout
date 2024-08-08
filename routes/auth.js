@@ -39,7 +39,7 @@ router.post('/login', async (req, res) => {
     const { username, password } = req.body;
 
     try {
-        const users = await sequelize.query('SELECT * FROM admins WHERE username = :username', {
+        const users = await sequelize.query('SELECT * FROM users WHERE username = :username', {
             replacements: { username },
             type: QueryTypes.SELECT
         });
@@ -47,7 +47,6 @@ router.post('/login', async (req, res) => {
         if (users.length > 0) {
             const user = users[0];
             const passwordMatch = await bcrypt.compare(password, user.password);
-
             if (passwordMatch) {
                 req.user = user;
                 req.flash('success_msg', 'Login successful');

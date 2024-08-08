@@ -9,6 +9,12 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Static files setup
+app.use(express.static('public'));
+
+// Set EJS as the template engine
+app.set('view engine', 'ejs');
+
 // Session setup
 app.use(session({
     secret: process.env.SESSION_SECRET,
@@ -32,7 +38,17 @@ app.use('/auth', authRoutes);
 
 // Root route
 app.get('/', (req, res) => {
-    res.send('Welcome to the homepage!');
+    res.sendFile(__dirname + '/public/home.html');
+});
+
+// Route for login page
+app.get('/login', (req, res) => {
+    res.render('login');
+});
+
+// Route for register page
+app.get('/register', (req, res) => {
+    res.render('register');
 });
 
 const PORT = process.env.PORT || 8080;
