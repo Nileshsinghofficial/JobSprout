@@ -30,6 +30,12 @@ app.use((req, res, next) => {
 const authRoutes = require('./routes/auth');
 app.use('/auth', authRoutes);
 
-app.listen(process.env.PORT || 8080, () => {
-    console.log(`Server is running on port ${process.env.PORT || 8080}`);
+// Root route
+app.get('/', (req, res) => {
+    res.send('Welcome to the homepage!');
+});
+
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });

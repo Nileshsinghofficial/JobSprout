@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
-const sequelize = require('../config/db'); // Ensure the correct path
+const sequelize = require('../config/db');
 const { QueryTypes } = require('sequelize');
 require('dotenv').config();
 
@@ -46,8 +46,8 @@ router.post('/login', async (req, res) => {
 
         if (users.length > 0) {
             const user = users[0];
-
             const passwordMatch = await bcrypt.compare(password, user.password);
+
             if (passwordMatch) {
                 req.user = user;
                 req.flash('success_msg', 'Login successful');
