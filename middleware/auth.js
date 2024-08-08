@@ -1,9 +1,11 @@
 // middleware/auth.js
-module.exports = function ensureAuthenticated(req, res, next) {
-    if (req.session.user) {
-        req.user = req.session.user;
+
+function ensureAuthenticated(req, res, next) {
+    if (req.user) { // Adjust based on how you are storing user info
         return next();
     }
-    req.flash('error_msg', 'Please log in to view that resource');
-    res.redirect('/auth/login');
-};
+    req.flash('error_msg', 'Please log in to view this resource.');
+    res.redirect('/login');
+}
+
+module.exports = ensureAuthenticated;
