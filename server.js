@@ -5,6 +5,8 @@ const flash = require('connect-flash');
 const bodyParser = require('body-parser');
 const authRoutes = require('./routes/auth');
 const ensureAuthenticated = require('./middleware/auth');
+const sequelize = require('./config/db'); // Ensure this path is correct
+const { QueryTypes } = require('sequelize');
 
 const app = express();
 
