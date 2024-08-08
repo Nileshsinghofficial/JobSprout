@@ -71,13 +71,13 @@ router.post('/login', async (req, res) => {
 
 module.exports = router;
 
-// Profile route
-router.get('/profile', (req, res) => {
-    if (req.session.user) {
-        res.send(`Welcome, ${req.session.user.username}`);
-    } else {
-        res.redirect('/login');
-    }
-});
+// // Profile route
+// router.get('/profile', (req, res) => {
+//     if (req.session.user) {
+//         res.send(`Welcome, ${req.session.user.username}`);
+//     } else {
+//         res.redirect('/login');
+//     }
+// });
 
 module.exports = router;
