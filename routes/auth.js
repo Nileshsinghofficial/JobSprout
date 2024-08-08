@@ -5,18 +5,23 @@ const sequelize = require('../config/db');
 const { QueryTypes } = require('sequelize');
 require('dotenv').config();
 
-// Registration route
+// Render registration form
+router.get('/register', (req, res) => {
+    res.render('register'); // Render the register.ejs view
+});
+
+// Handle registration form submission
 router.post('/register', async (req, res) => {
     const { username, email, password, confirmPassword, checkbox } = req.body;
 
     if (password !== confirmPassword) {
         req.flash('error_msg', 'Passwords do not match');
-        return res.redirect('/auth/register');
+        return res.redirect('/register');
     }
 
     if (!checkbox) {
         req.flash('error_msg', 'You must agree to the terms and conditions');
-        return res.redirect('/auth/register');
+        return res.redirect('/register');
     }
 
     try {
@@ -26,13 +31,14 @@ router.post('/register', async (req, res) => {
             type: QueryTypes.INSERT
         });
         req.flash('success_msg', 'Registration successful. Please log in.');
-        res.redirect('/auth/login');
+        res.redirect('/login');
     } catch (error) {
         console.error('Database error:', error);
         req.flash('error_msg', 'Server error during registration');
-        res.redirect('/auth/register');
+        res.redirect('/register');
     }
 });
+
 
 // Login route
 router.post('/login', async (req, res) => {
