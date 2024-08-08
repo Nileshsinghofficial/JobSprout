@@ -1,8 +1,8 @@
-function ensureAuthenticated(req, res, next) {
-    if (req.session && req.session.user) {
+module.exports = function ensureAuthenticated(req, res, next) {
+    if (req.session.user) {
+        req.user = req.session.user;
         return next();
     }
-    res.redirect('/login');
-}
-
-module.exports = { ensureAuthenticated };
+    req.flash('error_msg', 'Please log in to view that resource');
+    res.redirect('/auth/login');
+};

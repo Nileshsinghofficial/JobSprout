@@ -46,9 +46,10 @@ router.post('/login', async (req, res) => {
 
         if (users.length > 0) {
             const user = users[0];
+
             const passwordMatch = await bcrypt.compare(password, user.password);
             if (passwordMatch) {
-                req.user = user;
+                req.session.user = user;
                 req.flash('success_msg', 'Login successful');
                 res.redirect('/profile');
             } else {
@@ -64,6 +65,15 @@ router.post('/login', async (req, res) => {
         req.flash('error_msg', 'Server error during login');
         res.redirect('/login');
     }
+});
+
+// Registration and login pages
+router.get('/register', (req, res) => {
+    res.render('register', { error_msg: req.flash('error_msg'), success_msg: req.flash('success_msg') });
+});
+
+router.get('/login', (req, res) => {
+    res.render('login', { error_msg: req.flash('error_msg'), success_msg: req.flash('success_msg') });
 });
 
 module.exports = router;

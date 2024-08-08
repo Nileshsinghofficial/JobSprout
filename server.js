@@ -1,56 +1,42 @@
 const express = require('express');
+const path = require('path');
 const session = require('express-session');
 const flash = require('connect-flash');
-require('dotenv').config();
+const bodyParser = require('body-parser');
+const authRoutes = require('./routes/auth');
+const ensureAuthenticated = require('./middleware/auth');
 
 const app = express();
 
-// Middleware setup
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Middleware
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Static files setup
-app.use(express.static('public'));
-
-// Set EJS as the template engine
-app.set('view engine', 'ejs');
-
-// Session setup
+// Set up sessions and flash messages
 app.use(session({
-    secret: process.env.SESSION_SECRET,
+    secret: 'your_secret_key',
     resave: false,
     saveUninitialized: true,
 }));
 
-// Flash messages setup
 app.use(flash());
 
-// Set global variables for flash messages
-app.use((req, res, next) => {
-    res.locals.success_msg = req.flash('success_msg');
-    res.locals.error_msg = req.flash('error_msg');
-    next();
-});
+// Set view engine
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
 // Routes
-const authRoutes = require('./routes/auth');
 app.use('/auth', authRoutes);
 
-// Root route
 app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/public/home.html');
+    res.sendFile(path.join(__dirname, 'public', 'home.html'));
 });
 
-// Route for login page
-app.get('/login', (req, res) => {
-    res.render('login');
+app.get('/profile', ensureAuthenticated, (req, res) => {
+    res.render('profile', { user: req.user });
 });
 
-// Route for register page
-app.get('/register', (req, res) => {
-    res.render('register');
-});
-
+// Server
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
