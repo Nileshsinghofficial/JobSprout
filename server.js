@@ -33,9 +33,12 @@ app.get('/', (req, res) => {
 });
 
 app.get('/profile', ensureAuthenticated, (req, res) => {
-    res.render('profile', { user: req.user });
+    res.render('profile', {
+        user: req.user,
+        success_msg: req.flash('success_msg'),
+        error_msg: req.flash('error_msg')
+    });
 });
-
 // Server
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {

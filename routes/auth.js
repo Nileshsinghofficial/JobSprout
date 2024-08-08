@@ -11,12 +11,12 @@ router.post('/register', async (req, res) => {
 
     if (password !== confirmPassword) {
         req.flash('error_msg', 'Passwords do not match');
-        return res.redirect('/register');
+        return res.redirect('/auth/register');
     }
 
     if (!checkbox) {
         req.flash('error_msg', 'You must agree to the terms and conditions');
-        return res.redirect('/register');
+        return res.redirect('/auth/register');
     }
 
     try {
@@ -26,11 +26,11 @@ router.post('/register', async (req, res) => {
             type: QueryTypes.INSERT
         });
         req.flash('success_msg', 'Registration successful. Please log in.');
-        res.redirect('/login');
+        res.redirect('/auth/login');
     } catch (error) {
         console.error('Database error:', error);
         req.flash('error_msg', 'Server error during registration');
-        res.redirect('/register');
+        res.redirect('/auth/register');
     }
 });
 
@@ -54,16 +54,16 @@ router.post('/login', async (req, res) => {
                 res.redirect('/profile');
             } else {
                 req.flash('error_msg', 'Invalid username or password');
-                res.redirect('/login');
+                res.redirect('/auth/login');
             }
         } else {
             req.flash('error_msg', 'Invalid username or password');
-            res.redirect('/login');
+            res.redirect('/auth/login');
         }
     } catch (error) {
         console.error('Database connection error:', error);
         req.flash('error_msg', 'Server error during login');
-        res.redirect('/login');
+        res.redirect('/auth/login');
     }
 });
 
@@ -74,6 +74,17 @@ router.get('/register', (req, res) => {
 
 router.get('/login', (req, res) => {
     res.render('login', { error_msg: req.flash('error_msg'), success_msg: req.flash('success_msg') });
+});
+
+// Logout route
+router.post('/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            return res.redirect('/profile');
+        }
+        res.clearCookie('connect.sid');
+        res.redirect('/auth/login');
+    });
 });
 
 module.exports = router;
