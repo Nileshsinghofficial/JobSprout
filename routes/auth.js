@@ -40,6 +40,10 @@ router.post('/register', async (req, res) => {
 });
 
 
+app.get('/login', (req, res) => {
+    res.render('login'); // Render login.ejs
+});
+
 // Login route
 router.post('/login', async (req, res) => {
     const { username, password } = req.body;
