@@ -5,6 +5,8 @@ const sequelize = require('../config/db');
 const { QueryTypes } = require('sequelize');
 require('dotenv').config();
 
+const app = express();
+
 // Render registration form
 router.get('/register', (req, res) => {
     res.render('register'); // Render the register.ejs view
